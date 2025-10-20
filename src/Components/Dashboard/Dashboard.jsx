@@ -14,34 +14,37 @@ const Dashboard = () => {
   const [tone, setTone] = useState("formal");
   const [loading, setLoading] = useState(false);
   const [pitchData, setPitchData] = useState("");
+  const [showCodePreview, setShowCodePreview] = useState(false);
 
   const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+
 
   const handleGenerate = async () => {
     if (!idea.trim()) return alert("Please write your startup idea!");
     setLoading(true);
     setPitchData("");
+    setShowCodePreview(false);
 
-    const prompt = `
-You are an AI startup pitch assistant.
+    const prompt = `You are an AI startup pitch assistant.
 Generate a professional startup pitch based on the details below.
 
 Startup Idea: ${idea}
 Tone: ${tone}
 
-Return the result clearly formatted like this:
+IMPORTANT: Return the result in EXACTLY this format:
 
-Startup Name:
-Tagline:
-Elevator Pitch:
-Problem:
-Solution:
-Target Audience:
-Market Size:
-Revenue Model:
-Landing Page Content:
-`;
+Startup Name: [name here]
+Tagline: [tagline here]
+Elevator Pitch: [2-3 sentence description]
+Problem: [the problem being solved]
+Solution: [your solution]
+Target Audience: [who will use this]
+Market Size: [potential market size]
+Revenue Model: [how you'll make money]
+Landing Page Content: [compelling content for website]
+
+Make sure each section is on a new line and uses the exact format above.`;
 
     try {
       const res = await fetch(endpoint, {
@@ -84,6 +87,191 @@ Landing Page Content:
       alert("Failed to save pitch!");
     }
   };
+
+  const parsePitchData = (data) => {
+    const sections = {
+      'Startup Name': '',
+      'Tagline': '',
+      'Elevator Pitch': '',
+      'Problem': '',
+      'Solution': '',
+      'Target Audience': '',
+      'Market Size': '',
+      'Revenue Model': '',
+      'Landing Page Content': ''
+    };
+    
+    const lines = data.split('\n');
+    let currentSection = '';
+    
+    lines.forEach(line => {
+      line = line.trim();
+      if (!line) return;
+      
+      // Check if line starts with any of our section headers
+      for (const section of Object.keys(sections)) {
+        if (line.startsWith(section + ':') || line.startsWith(section + ' :')) {
+          currentSection = section;
+          const value = line.substring(line.indexOf(':') + 1).trim();
+          if (value) {
+            sections[currentSection] = value;
+          }
+          return;
+        }
+      }
+      
+      // If we're in a section and line doesn't start with new section, append to current section
+      if (currentSection && !line.includes(':')) {
+        if (sections[currentSection]) {
+          sections[currentSection] += '\n' + line;
+        } else {
+          sections[currentSection] = line;
+        }
+      }
+    });
+    
+    return sections;
+  };
+
+  const generateLandingPageCode = (pitchSections) => {
+    const startupName = pitchSections['Startup Name'] || 'Your Startup';
+    const tagline = pitchSections['Tagline'] || 'Your Tagline';
+    const elevatorPitch = pitchSections['Elevator Pitch'] || 'Your elevator pitch';
+    const problem = pitchSections['Problem'] || 'The problem we solve';
+    const solution = pitchSections['Solution'] || 'Our solution';
+    const targetAudience = pitchSections['Target Audience'] || 'Target audience';
+    const marketSize = pitchSections['Market Size'] || 'Market size';
+    const revenueModel = pitchSections['Revenue Model'] || 'Revenue model';
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${startupName}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-100">
+    <nav class="bg-white/80 backdrop-blur-lg border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg"></div>
+                    <span class="text-xl font-bold text-gray-900">${startupName}</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#problem" class="text-gray-600 hover:text-gray-900 transition-colors">Problem</a>
+                    <a href="#solution" class="text-gray-600 hover:text-gray-900 transition-colors">Solution</a>
+                    <a href="#audience" class="text-gray-600 hover:text-gray-900 transition-colors">Audience</a>
+                    <a href="#market" class="text-gray-600 hover:text-gray-900 transition-colors">Market</a>
+                </div>
+                <button class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                    Get Started
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="py-20 px-4">
+        <div class="max-w-6xl mx-auto text-center">
+            <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                ${startupName}
+            </h1>
+            <p class="text-2xl md:text-3xl text-purple-600 font-semibold mb-8">
+                ${tagline}
+            </p>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                ${elevatorPitch}
+            </p>
+            <div class="mt-12 space-x-4">
+                <button class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                    Start Free Trial
+                </button>
+                <button class="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold text-lg hover:border-purple-500 hover:text-purple-600 transition-all duration-300">
+                    Learn More
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section id="problem" class="py-16 bg-white/50 backdrop-blur-sm">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">The Problem</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    ${problem}
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section id="solution" class="py-16">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Our Solution</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    ${solution}
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section id="audience" class="py-16 bg-white/50 backdrop-blur-sm">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Target Audience</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    ${targetAudience}
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section id="market" class="py-16">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="grid md:grid-cols-2 gap-12">
+                <div class="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Market Size</h3>
+                    <p class="text-gray-600 text-lg leading-relaxed">
+                        ${marketSize}
+                    </p>
+                </div>
+                <div class="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Revenue Model</h3>
+                    <p class="text-gray-600 text-lg leading-relaxed">
+                        ${revenueModel}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <div class="flex justify-center items-center space-x-2 mb-6">
+                <div class="w-6 h-6 bg-gradient-to-r from-blue-400 to-purple-500 rounded"></div>
+                <span class="text-xl font-bold">${startupName}</span>
+            </div>
+            <p class="text-gray-400">© 2024 ${startupName}. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>`;
+  };
+
+  // Debug function to see what we're getting
+  const debugPitchData = (data) => {
+    console.log("Raw pitch data:", data);
+    const parsed = parsePitchData(data);
+    console.log("Parsed sections:", parsed);
+    return parsed;
+  };
+
+  const pitchSections = pitchData ? debugPitchData(pitchData) : {};
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100">
@@ -174,7 +362,7 @@ Landing Page Content:
 
        
         <div className="flex-1 flex items-center justify-center px-6 py-8">
-          <div className="w-full max-w-4xl">
+          <div className="w-full max-w-6xl">
             <div className="bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/20 transform transition-all duration-500 hover:shadow-3xl">
               <div className="text-center mb-8">
                 <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
@@ -250,37 +438,150 @@ Landing Page Content:
         
             {pitchData && (
               <div className="mt-8 bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/20 animate-fadeIn">
-                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-xl flex items-center justify-center">
-                    <span className="text-2xl">✨</span>
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-xl flex items-center justify-center">
+                      <span className="text-2xl">✨</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                        Your Generated Pitch
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        Ready to impress investors 🎯
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                      Your Generated Pitch
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Ready to impress investors 🎯
-                    </p>
-                  </div>
+                  <button
+                    onClick={() => setShowCodePreview(!showCodePreview)}
+                    className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+                  >
+                    {showCodePreview ? "📋 Show Pitch" : "👁️ Show Code Preview"}
+                  </button>
                 </div>
 
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
-                  components={{
-                    strong: ({ node, ...props }) => (
-                      <strong {...props} className="text-blue-600 font-semibold" />
-                    ),
-                    p: ({ node, ...props }) => (
-                      <p {...props} className="text-gray-700 leading-relaxed mb-3" />
-                    ),
-                    li: ({ node, ...props }) => (
-                      <li {...props} className="ml-6 list-disc text-gray-700 mb-1" />
-                    ),
-                  }}
-                >
-                  {pitchData}
-                </ReactMarkdown>
+                {!showCodePreview ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-6 shadow-lg">
+                        <h4 className="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
+                          <span className="text-xl">🚀</span>
+                          Startup Name
+                        </h4>
+                        <p className="text-2xl font-bold text-blue-900 bg-white/50 rounded-xl p-4 border border-blue-300">
+                          {pitchSections['Startup Name'] || 'Not specified'}
+                        </p>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-2xl p-6 shadow-lg">
+                        <h4 className="text-lg font-bold text-purple-800 mb-3 flex items-center gap-2">
+                          <span className="text-xl">🎯</span>
+                          Tagline
+                        </h4>
+                        <p className="text-xl font-semibold text-purple-900 bg-white/50 rounded-xl p-4 border border-purple-300 italic">
+                          "{pitchSections['Tagline'] || 'Not specified'}"
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-100 border-2 border-green-200 rounded-2xl p-6 shadow-lg">
+                      <h4 className="text-lg font-bold text-green-800 mb-3 flex items-center gap-2">
+                        <span className="text-xl">📈</span>
+                        Elevator Pitch
+                      </h4>
+                      <p className="text-gray-700 leading-relaxed bg-white/50 rounded-xl p-4 border border-green-300">
+                        {pitchSections['Elevator Pitch'] || 'Not specified'}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-gradient-to-br from-red-50 to-red-100 border-2 border-red-200 rounded-2xl p-6 shadow-lg">
+                        <h4 className="text-lg font-bold text-red-800 mb-3 flex items-center gap-2">
+                          <span className="text-xl">⚠️</span>
+                          Problem
+                        </h4>
+                        <p className="text-gray-700 leading-relaxed bg-white/50 rounded-xl p-4 border border-red-300">
+                          {pitchSections['Problem'] || 'Not specified'}
+                        </p>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-teal-50 to-teal-100 border-2 border-teal-200 rounded-2xl p-6 shadow-lg">
+                        <h4 className="text-lg font-bold text-teal-800 mb-3 flex items-center gap-2">
+                          <span className="text-xl">💡</span>
+                          Solution
+                        </h4>
+                        <p className="text-gray-700 leading-relaxed bg-white/50 rounded-xl p-4 border border-teal-300">
+                          {pitchSections['Solution'] || 'Not specified'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200 rounded-2xl p-6 shadow-lg">
+                        <h4 className="text-lg font-bold text-orange-800 mb-3 flex items-center gap-2">
+                          <span className="text-xl">👥</span>
+                          Target Audience
+                        </h4>
+                        <p className="text-gray-700 leading-relaxed bg-white/50 rounded-xl p-4 border border-orange-300">
+                          {pitchSections['Target Audience'] || 'Not specified'}
+                        </p>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-2 border-indigo-200 rounded-2xl p-6 shadow-lg">
+                        <h4 className="text-lg font-bold text-indigo-800 mb-3 flex items-center gap-2">
+                          <span className="text-xl">📊</span>
+                          Market Size
+                        </h4>
+                        <p className="text-gray-700 leading-relaxed bg-white/50 rounded-xl p-4 border border-indigo-300">
+                          {pitchSections['Market Size'] || 'Not specified'}
+                        </p>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-pink-50 to-pink-100 border-2 border-pink-200 rounded-2xl p-6 shadow-lg">
+                        <h4 className="text-lg font-bold text-pink-800 mb-3 flex items-center gap-2">
+                          <span className="text-xl">💰</span>
+                          Revenue Model
+                        </h4>
+                        <p className="text-gray-700 leading-relaxed bg-white/50 rounded-xl p-4 border border-pink-300">
+                          {pitchSections['Revenue Model'] || 'Not specified'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {pitchSections['Landing Page Content'] && (
+                      <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-2xl p-6 shadow-lg">
+                        <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                          <span className="text-xl">🌐</span>
+                          Landing Page Content
+                        </h4>
+                        <div className="text-gray-700 leading-relaxed bg-white/50 rounded-xl p-4 border border-gray-300 whitespace-pre-wrap">
+                          {pitchSections['Landing Page Content']}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-gray-900 rounded-2xl p-6 shadow-xl">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-lg font-bold text-white flex items-center gap-2">
+                        <span className="text-xl">💻</span>
+                        Landing Page Code Preview
+                      </h4>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(generateLandingPageCode(pitchSections));
+                          alert('Code copied to clipboard!');
+                        }}
+                        className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+                      >
+                        📋 Copy Code
+                      </button>
+                    </div>
+                    <pre className="bg-gray-800 rounded-xl p-6 overflow-x-auto text-green-400 text-sm leading-relaxed border border-gray-700">
+                      <code>{generateLandingPageCode(pitchSections)}</code>
+                    </pre>
+                  </div>
+                )}
               </div>
             )}
           </div>
