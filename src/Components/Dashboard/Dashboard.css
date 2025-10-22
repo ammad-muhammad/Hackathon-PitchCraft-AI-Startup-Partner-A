@@ -79,3 +79,172 @@
 .animate-pulse-shadow {
     animation: pulseShadow 2s infinite;
 }
+
+
+/* 🌈 General Page Layout */
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, #eef2ff, #fdf2f8);
+  overflow-x: hidden;
+}
+
+/* 🎨 Center Content on all screens */
+.dashboard-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 🧠 Card Layout */
+.dashboard-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 1100px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  margin: 1rem auto;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ⚡ Buttons */
+button {
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
+/* 🧾 Text Areas and Inputs */
+textarea, input, select {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 2px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+textarea:focus, input:focus, select:focus {
+  outline: none;
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.2);
+}
+
+/* 💻 Code Preview */
+pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-radius: 1rem;
+}
+
+/* 🌐 Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #6366f1, #a855f7);
+  border-radius: 10px;
+}
+
+/* 📱 Responsive Design */
+@media (max-width: 1024px) {
+  .dashboard-card {
+    padding: 1.25rem;
+    max-width: 90%;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .dashboard-content {
+    padding: 1rem;
+  }
+
+  .dashboard-card {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+
+  textarea {
+    font-size: 0.9rem;
+  }
+
+  button {
+    width: 100%;
+    font-size: 0.9rem;
+  }
+
+  /* Sidebar hidden on mobile */
+  aside {
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    border-radius: 1rem 1rem 0 0;
+    z-index: 50;
+  }
+
+  .dashboard-card .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-card {
+    padding: 0.8rem;
+    max-width: 95%;
+  }
+
+  textarea {
+    font-size: 0.85rem;
+  }
+
+  button {
+    padding: 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  h3, h4 {
+    font-size: 1rem;
+  }
+}
+
+/* ✨ Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
