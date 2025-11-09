@@ -1,9 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider } from "firebase/auth"; // ✅ Fixed import
 
-import {getFirestore} from "firebase/firestore";
-import {getAuth} from "firebase/auth";
-import { GoogleAuthProvider } from "firebase/auth/web-extension";
 const firebaseConfig = {
   apiKey: "AIzaSyAL3z7emumj3MjdKhOK8TUccrUbQMn17M8",
   authDomain: "hackathonaistartup.firebaseapp.com",
@@ -17,9 +16,19 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+// Initialize Firestore
 const db = getFirestore(app);
 
-const auth = getAuth();
+// Initialize Auth
+const auth = getAuth(app); // ✅ Pass app instance
+
+// Initialize Google Provider
 const googleProvider = new GoogleAuthProvider();
 
-export {db , auth, googleProvider}
+// ✅ Optional: Configure Google Provider
+googleProvider.setCustomParameters({
+  prompt: "select_account" // Force account selection every time
+});
+
+export { db, auth, googleProvider };
+export default app;

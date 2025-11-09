@@ -6,6 +6,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import "./Dashboard.css";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import Swal from 'sweetalert2';
 import rehypeRaw from "rehype-raw";
 
 const Dashboard = () => {
@@ -81,7 +82,128 @@ Make sure each section is on a new line and uses the exact format above.`;
         response: pitchData,
         createdAt: serverTimestamp(),
       });
-      alert("✅ Pitch saved successfully!");
+      alert("✅ Pitch saved successfully!");      
+      
+      // ...existing code...
+      
+      const handleGenerate = async () => {
+        if (!idea.trim()) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Empty Idea',
+            text: 'Please write your startup idea!',
+            confirmButtonColor: '#6366f1'
+          });
+          return;
+        }
+        
+        setLoading(true);
+        setPitchData("");
+        setShowCodePreview(false);
+      
+        try {
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+            }),
+          });
+      
+          const data = await res.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini 😔";
+          setPitchData(text);
+          
+          Swal.fire({
+            icon: 'success',
+            title: 'Pitch Generated!',
+            text: 'Your startup pitch has been generated successfully.',
+            confirmButtonColor: '#6366f1'
+          });
+        } catch (err) {
+          console.error("❌ Gemini Error:", err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Generation Failed',
+            text: 'Failed to generate pitch. Please try again.',
+            confirmButtonColor: '#6366f1'
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      const handleSave = async () => {
+        if (!user) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Login Required',
+            text: 'Please login to save your pitch!',
+            confirmButtonColor: '#6366f1'
+          });
+          return;
+        }
+        
+        if (!pitchData) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'No Pitch',
+            text: 'Generate a pitch first!',
+            confirmButtonColor: '#6366f1'
+          });
+          return;
+        }
+      
+        try {
+          await addDoc(collection(db, "pitches"), {
+            userId: user.uid,
+            idea,
+            tone,
+            response: pitchData,
+            createdAt: serverTimestamp(),
+          });
+          
+          Swal.fire({
+            icon: 'success',
+            title: 'Saved!',
+            text: 'Your pitch has been saved successfully.',
+            confirmButtonColor: '#6366f1'
+          });
+        } catch (err) {
+          console.error("❌ Save Error:", err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Save Failed',
+            text: 'Failed to save pitch. Please try again.',
+            confirmButtonColor: '#6366f1'
+          });
+        }
+      };
+      
+      // Modify the copy code button click handler
+      const handleCopyCode = () => {
+        navigator.clipboard.writeText(generateLandingPageCode(pitchSections));
+        Swal.fire({
+          icon: 'success',
+          title: 'Copied!',
+          text: 'Landing page code has been copied to clipboard.',
+          toast: true,
+          position: 'bottom-end',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
+      };
+      
+      // Then in your JSX, update the copy button onClick:
+      <button
+        onClick={handleCopyCode}
+        className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+      >
+        📋 Copy Code
+      </button>
+      
+      // ...rest of your existing code...
     } catch (err) {
       console.error("❌ Save Error:", err);
       alert("Failed to save pitch!");
